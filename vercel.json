@@ -14,9 +14,5 @@
   ],
   "ignoreCommand": "echo 'Skipping build - static site'",
   "buildCommand": "echo 'No build needed for static site'",
-  "outputDirectory": "frontend",
-  "functions": {},
-  "env": {
-    "BACKEND_URL": "@backend_url"
-  }
+  "outputDirectory": "frontend"
 }
