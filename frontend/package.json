@@ -1,0 +1,17 @@
+{
+  "name": "youtube-downloader-frontend",
+  "version": "1.0.0",
+  "description": "Lightweight frontend for YouTube Video Downloader PRO",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server . -p 3000",
+    "build": "echo 'No build step needed for static site'",
+    "start": "npx http-server . -p 3000"
+  },
+  "keywords": ["youtube", "downloader", "frontend", "vercel"],
+  "author": "WildChild Studios",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

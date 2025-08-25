@@ -1,10 +1,22 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/index.py", "use": "@vercel/python" }
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/api/index.py" }
-  ]
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/$1"
+    }
+  ],
+  "ignoreCommand": "echo 'Skipping build - static site'",
+  "buildCommand": "echo 'No build needed for static site'",
+  "outputDirectory": "frontend",
+  "functions": {},
+  "env": {
+    "BACKEND_URL": "@backend_url"
+  }
 }
-

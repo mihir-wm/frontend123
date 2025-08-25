@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader PRO</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">
+                <svg viewBox="0 0 24 17" xmlns="http://www.w3.org/2000/svg">
+                    <path fill="#FF0033" d="M23.5 2.5a4 4 0 0 0-2.8-2.8C18.6-.9 12-.9 12-.9s-6.6 0-8.7.6A4 4 0 0 0 .5 2.5 41.2 41.2 0 0 0 0 8c0 1.9.2 3.8.5 5.5a4 4 0 0 0 2.8 2.8c2.1.6 8.7.6 8.7.6s6.6 0 8.7-.6a4 4 0 0 0 2.8-2.8A41.2 41.2 0 0 0 24 8c0-1.9-.2-3.8-.5-5.5Z"/>
+                    <path fill="#fff" d="M9.6 12.1V3.9L16 8l-6.4 4.1z"/>
+                </svg>
+            </div>
+            <h1>YOUTUBE VIDEO DOWNLOADER PRO</h1>
+        </header>
+
+        <!-- Main Form -->
+        <div class="main-form">
+            <div class="url-section">
+                <div class="input-group">
+                    <label for="youtube-url">YouTube Video URL</label>
+                    <input type="url" id="youtube-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <div class="input-group">
+                    <label for="ffmpeg-path">FFmpeg Path (Optional)</label>
+                    <input type="text" id="ffmpeg-path" placeholder="C:\ffmpeg\bin">
+                </div>
+            </div>
+
+            <!-- Video Header (Thumbnail + Title) -->
+            <div id="video-header" class="video-header" style="display: none;">
+                <img id="video-thumbnail" src="" alt="Video thumbnail">
+                <div id="video-title" class="video-title"></div>
+            </div>
+
+            <!-- Global Settings -->
+            <div class="settings-section">
+                <h3>Global Settings</h3>
+                <div class="settings-grid">
+                    <div class="input-group">
+                        <label for="quality-preset">Quality Preset</label>
+                        <select id="quality-preset">
+                            <option value="Balanced">Balanced</option>
+                            <option value="Best quality (modern)">Best quality (modern)</option>
+                            <option value="MP4 compatibility">MP4 compatibility</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="container-pref">Container</label>
+                        <select id="container-pref">
+                            <option value="Auto (MKV)">Auto (MKV)</option>
+                            <option value="MP4">MP4</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="use-aria2c">Use aria2c (faster)</label>
+                        <input type="checkbox" id="use-aria2c">
+                    </div>
+                    <div class="input-group">
+                        <label for="archive-enable">Skip already downloaded</label>
+                        <input type="checkbox" id="archive-enable">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Settings -->
+            <div class="save-section">
+                <div class="input-group">
+                    <label for="save-to-folder">Save outputs to folder</label>
+                    <input type="checkbox" id="save-to-folder">
+                </div>
+                <div class="input-group">
+                    <label for="folder-path">Folder Path</label>
+                    <input type="text" id="folder-path" placeholder="C:\Users\You\Downloads\yt_outputs">
+                </div>
+            </div>
+        </div>
+
+        <!-- Function Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="screenshots">
+                <i class="fas fa-images"></i> Screenshots
+            </button>
+            <button class="tab-btn" data-tab="audio">
+                <i class="fas fa-music"></i> Audio
+            </button>
+            <button class="tab-btn" data-tab="video">
+                <i class="fas fa-video"></i> Video
+            </button>
+        </div>
+
+        <!-- Screenshots Tab -->
+        <div id="screenshots" class="tab-content active">
+            <div class="function-section">
+                <h3>Extract Screenshots</h3>
+                <div class="options-grid">
+                    <div class="input-group">
+                        <label for="image-res">Image Resolution</label>
+                        <select id="image-res">
+                            <option value="Best available">Best available</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="extraction-mode">Extraction Mode</label>
+                        <select id="extraction-mode">
+                            <option value="Precise (OpenCV)">Precise (OpenCV)</option>
+                            <option value="Fast (FFmpeg)">Fast (FFmpeg)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="interval">Interval (seconds)</label>
+                        <input type="number" id="interval" value="10" min="0.1" step="0.1">
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="screenshots-btn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Get Screenshots
+                    </button>
+                    <button id="cancel-screenshots-btn" class="btn btn-secondary" style="display: none;">
+                        <i class="fas fa-stop"></i> Cancel
+                    </button>
+                </div>
+                <div id="screenshots-progress" class="progress-bar" style="display: none;">
+                    <div class="progress-fill"></div>
+                    <span class="progress-text">0%</span>
+                </div>
+                <div id="screenshots-status" class="status-message"></div>
+                <div id="screenshots-gallery" class="gallery"></div>
+                <div id="screenshots-download" class="download-section" style="display: none;">
+                    <a id="screenshots-zip" class="btn btn-success" download>
+                        <i class="fas fa-download"></i> Download All as ZIP
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audio Tab -->
+        <div id="audio" class="tab-content">
+            <div class="function-section">
+                <h3>Download Audio</h3>
+                <div class="options-grid">
+                    <div class="input-group">
+                        <label for="audio-format">Format</label>
+                        <select id="audio-format">
+                            <option value="Original (OPUS/WebM)">Original (OPUS/WebM)</option>
+                            <option value="MP3">MP3</option>
+                            <option value="WAV">WAV</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="audio-bitrate">MP3 Bitrate</label>
+                        <select id="audio-bitrate">
+                            <option value="320 kbps">320 kbps</option>
+                            <option value="256 kbps">256 kbps</option>
+                            <option value="192 kbps">192 kbps</option>
+                            <option value="128 kbps">128 kbps</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="audio-btn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Get Audio
+                    </button>
+                    <button id="cancel-audio-btn" class="btn btn-secondary" style="display: none;">
+                        <i class="fas fa-stop"></i> Cancel
+                    </button>
+                </div>
+                <div id="audio-progress" class="progress-bar" style="display: none;">
+                    <div class="progress-fill"></div>
+                    <span class="progress-text">0%</span>
+                </div>
+                <div id="audio-status" class="status-message"></div>
+                <div id="audio-player" class="audio-player" style="display: none;">
+                    <audio controls></audio>
+                </div>
+                <div id="audio-download" class="download-section" style="display: none;">
+                    <a id="audio-file" class="btn btn-success" download>
+                        <i class="fas fa-download"></i> Download Audio File
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Tab -->
+        <div id="video" class="tab-content">
+            <div class="function-section">
+                <h3>Download Video</h3>
+                <div class="options-grid">
+                    <div class="input-group">
+                        <label for="video-res">Resolution</label>
+                        <select id="video-res">
+                            <option value="Best available (MP4)">Best available (MP4)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button id="video-btn" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Get Video
+                    </button>
+                    <button id="cancel-video-btn" class="btn btn-secondary" style="display: none;">
+                        <i class="fas fa-stop"></i> Cancel
+                    </button>
+                </div>
+                <div id="video-progress" class="progress-bar" style="display: none;">
+                    <div class="progress-fill"></div>
+                    <span class="progress-text">0%</span>
+                </div>
+                <div id="video-status" class="status-message"></div>
+                <div id="video-player" class="video-player" style="display: none;">
+                    <video controls></video>
+                </div>
+                <div id="video-download" class="download-section" style="display: none;">
+                    <a id="video-file" class="btn btn-success" download>
+                        <i class="fas fa-download"></i> Download Video File
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="custom-footer">
+            Powered by <a href="https://www.wildchildstudios.com" target="_blank">www.wildchildstudios.com</a>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,9 +1,7 @@
-fastapi==0.115.0
-gradio==4.44.0
-uvicorn==0.30.6
-yt-dlp==2025.01.12
-opencv-python==4.10.0.84
-Pillow==10.4.0
-requests==2.32.3
-numpy==2.1.1
-
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+yt-dlp==2023.11.16
+opencv-python==4.8.1.78
+pillow==10.1.0
+requests==2.31.0
+python-multipart==0.0.6
