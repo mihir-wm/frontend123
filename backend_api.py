@@ -311,12 +311,16 @@ async def extract_screenshots(request: ScreenshotsRequest):
     
     def generate_screenshots():
         try:
+            print(f"[DEBUG] Starting screenshot extraction for URL: {request.url}")
+            
             # Validate inputs
             if not request.url or not request.url.strip():
+                print("[DEBUG] Invalid URL provided")
                 yield f"data: {json.dumps({'error': 'Please provide a valid YouTube URL'})}\n\n"
                 return
             
             if request.interval <= 0:
+                print("[DEBUG] Invalid interval provided")
                 yield f"data: {json.dumps({'error': 'Interval must be > 0 seconds'})}\n\n"
                 return
             
@@ -325,6 +329,7 @@ async def extract_screenshots(request: ScreenshotsRequest):
             gallery_dir = os.path.join(session_dir, "screenshots")
             os.makedirs(gallery_dir, exist_ok=True)
             
+            print(f"[DEBUG] Created session directory: {session_dir}")
             yield f"data: {json.dumps({'status': 'Starting screenshot extraction...', 'progress': 0})}\n\n"
             
             try:
@@ -332,15 +337,20 @@ async def extract_screenshots(request: ScreenshotsRequest):
                 height = None if "Best" in (request.image_res_label or "") else parse_height_from_label(request.image_res_label)
                 
                 # Download video first (simplified approach)
+                print(f"[DEBUG] Starting video download...")
                 ydl_opts = {**YTDLP_COMMON, "format": "best[ext=mp4][acodec!=none][vcodec!=none]",
                             "outtmpl": os.path.join(session_dir, "%(title).200B.%(ext)s"), "logger": _QuietLogger()}
                 
                 yield f"data: {json.dumps({'status': 'Downloading video...', 'progress': 15})}\n\n"
+                print(f"[DEBUG] Progress update sent: 15%")
                 
                 with YoutubeDL(ydl_opts) as ydl:
+                    print(f"[DEBUG] yt-dlp starting download...")
                     info = ydl.extract_info(norm, download=True)
+                    print(f"[DEBUG] yt-dlp download completed")
                 
                 yield f"data: {json.dumps({'status': 'Video download completed, processing...', 'progress': 25})}\n\n"
+                print(f"[DEBUG] Progress update sent: 25%")
                 
                 # Find downloaded video file
                 req = info.get("requested_downloads")
@@ -354,18 +364,22 @@ async def extract_screenshots(request: ScreenshotsRequest):
                 yield f"data: {json.dumps({'status': 'Video downloaded, extracting screenshots...', 'progress': 30})}\n\n"
                 
                 # Extract screenshots using OpenCV
+                print(f"[DEBUG] Opening video file: {video_fp}")
                 cap = cv2.VideoCapture(video_fp)
                 if not cap.isOpened():
+                    print(f"[DEBUG] Failed to open video with OpenCV")
                     raise RuntimeError("Failed to open video with OpenCV.")
                 
                 fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
                 frame_count = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
                 duration = frame_count / fps if frame_count > 0 else 0
+                print(f"[DEBUG] Video info - FPS: {fps}, Frames: {frame_count}, Duration: {duration}s")
                 
                 paths = []
                 t = 0.0
                 last_ok_t = -1.0
                 
+                print(f"[DEBUG] Starting screenshot extraction loop...")
                 while t <= duration + 1e-3:
                     cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000.0)
                     ret, frame = cap.read()
@@ -391,6 +405,7 @@ async def extract_screenshots(request: ScreenshotsRequest):
                     t += request.interval
                     
                     progress = min(90, 30 + int(len(paths) * 60 / max(1, duration / request.interval)))
+                    print(f"[DEBUG] Screenshot {len(paths)} saved at {t}s, progress: {progress}%")
                     yield f"data: {json.dumps({'status': f'Saved {len(paths)} screenshot(s)...', 'progress': progress, 'images': paths})}\n\n"
                 
                 cap.release()
@@ -399,14 +414,18 @@ async def extract_screenshots(request: ScreenshotsRequest):
                     raise RuntimeError("No screenshots were extracted.")
                 
                 # Create ZIP file
+                print(f"[DEBUG] Creating ZIP file with {len(paths)} screenshots...")
                 yield f"data: {json.dumps({'status': 'Creating ZIP file...', 'progress': 85})}\n\n"
+                print(f"[DEBUG] Progress update sent: 85%")
                 
                 zip_path = os.path.join(session_dir, "screenshots.zip")
                 with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
                     for p in paths:
                         zf.write(p, arcname=os.path.basename(p))
                 
+                print(f"[DEBUG] ZIP file created: {zip_path}")
                 yield f"data: {json.dumps({'status': 'ZIP file created successfully', 'progress': 90})}\n\n"
+                print(f"[DEBUG] Progress update sent: 90%")
                 
                 # Save to user folder if requested
                 if request.save_to_folder and request.user_folder:
@@ -418,20 +437,26 @@ async def extract_screenshots(request: ScreenshotsRequest):
                 # Create download URL for the zip file
                 zip_filename = os.path.basename(zip_path)
                 download_url = f"/api/download/{zip_filename}"
+                print(f"[DEBUG] Download URL created: {download_url}")
                 
                 yield f"data: {json.dumps({'status': f'Done. Extracted {len(paths)} screenshot(s).', 'progress': 100, 'complete': True, 'zip_file': zip_path, 'download_url': download_url})}\n\n"
+                print(f"[DEBUG] Final completion sent with download_url")
                 
                 # Keep files alive for a few minutes so they can be downloaded
                 yield f"data: {json.dumps({'status': 'Files ready for download. They will be cleaned up automatically.', 'progress': 100})}\n\n"
+                print(f"[DEBUG] Files ready message sent")
                 
             except Exception as e:
+                print(f"[DEBUG] Error in screenshot extraction: {str(e)}")
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
             finally:
                 # Don't cleanup immediately - let files be downloaded first
                 # Files will be cleaned up by the system later
+                print(f"[DEBUG] Finally block executed")
                 pass
                     
         except Exception as e:
+            print(f"[DEBUG] Outer error in screenshot extraction: {str(e)}")
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
     
     return StreamingResponse(generate_screenshots(), media_type="text/plain")
