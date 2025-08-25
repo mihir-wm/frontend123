@@ -55,7 +55,7 @@ a[href*="gradio.app"], a[href*="gradio"], a[href*="api"], a[href*="settings"] {
 #custom_footer a:hover { text-decoration:underline; }
 """
 
-DEFAULT_FFMPEG_DIR = os.getenv("FFMPEG_PATH", (r"C:\ffmpeg\bin" if os.name == "nt" else ""))
+DEFAULT_FFMPEG_DIR = r"C:\ffmpeg\bin" if os.name == "nt" else ""
 YTDLP_COMMON = {
     "noprogress": True,
     "quiet": True,

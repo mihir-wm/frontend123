@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 import gradio as gr
 
-# Import the existing Gradio Blocks instance (`demo`) from app.py
+# Import the Gradio Blocks app instance `demo` from the project root `app.py`
 from app import demo
 
-# Create FastAPI app and mount Gradio at root path
-_fastapi = FastAPI()
-app = gr.mount_gradio_app(_fastapi, demo, path="/")
+# Create a FastAPI app and mount Gradio at the root path
+fastapi_app = FastAPI()
+app = gr.mount_gradio_app(fastapi_app, demo, path="/")
 
 
