@@ -407,7 +407,11 @@ async def extract_screenshots(request: ScreenshotsRequest):
                     zip_dest = unique_path(dst_dir, os.path.splitext(os.path.basename(zip_path))[0], "zip")
                     shutil.copy2(zip_path, zip_dest)
                 
-                yield f"data: {json.dumps({'status': f'Done. Extracted {len(paths)} screenshot(s).', 'progress': 100, 'complete': True, 'zip_file': zip_path})}\n\n"
+                # Create download URL for the zip file
+                zip_filename = os.path.basename(zip_path)
+                download_url = f"/api/download/{zip_filename}"
+                
+                yield f"data: {json.dumps({'status': f'Done. Extracted {len(paths)} screenshot(s).', 'progress': 100, 'complete': True, 'zip_file': zip_path, 'download_url': download_url})}\n\n"
                 
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -422,6 +426,50 @@ async def extract_screenshots(request: ScreenshotsRequest):
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
     
     return StreamingResponse(generate_screenshots(), media_type="text/plain")
+
+@app.get("/api/download/{filename}")
+async def download_file(filename: str):
+    """Download a file directly"""
+    try:
+        # Look for the file in temp directories
+        import glob
+        possible_paths = []
+        
+        # Check common temp locations
+        temp_dirs = [
+            tempfile.gettempdir(),
+            os.path.join(tempfile.gettempdir(), "ytscreenshots_*"),
+            os.path.join(tempfile.gettempdir(), "ytaudio_*"),
+            os.path.join(tempfile.gettempdir(), "ytvideo_*")
+        ]
+        
+        for temp_dir in temp_dirs:
+            if "*" in temp_dir:
+                # Expand glob patterns
+                for expanded_dir in glob.glob(temp_dir):
+                    possible_paths.append(os.path.join(expanded_dir, filename))
+            else:
+                possible_paths.append(os.path.join(temp_dir, filename))
+        
+        # Find the actual file
+        file_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                file_path = path
+                break
+        
+        if not file_path or not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Return file as download
+        return FileResponse(
+            path=file_path,
+            filename=filename,
+            media_type='application/octet-stream'
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/audio")
 async def download_audio(request: AudioRequest):
@@ -507,7 +555,11 @@ async def download_audio(request: AudioRequest):
                     dest = unique_path(dst, os.path.splitext(os.path.basename(download_path))[0], download_path.split('.')[-1])
                     shutil.copy2(download_path, dest)
                 
-                yield f"data: {json.dumps({'status': 'Audio ready!', 'progress': 100, 'complete': True, 'audio_file': download_path})}\n\n"
+                # Create download URL for the audio file
+                audio_filename = os.path.basename(download_path)
+                download_url = f"/api/download/{audio_filename}"
+                
+                yield f"data: {json.dumps({'status': 'Audio ready!', 'progress': 100, 'complete': True, 'audio_file': download_path, 'download_url': download_url})}\n\n"
                 
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -598,7 +650,11 @@ async def download_video(request: VideoRequest):
                     dest = unique_path(dst, os.path.splitext(os.path.basename(final_path))[0], ext)
                     shutil.copy2(final_path, dest)
                 
-                yield f"data: {json.dumps({'status': f'Video ready at {height_label(height)}!', 'progress': 100, 'complete': True, 'video_file': final_path})}\n\n"
+                # Create download URL for the video file
+                video_filename = os.path.basename(final_path)
+                download_url = f"/api/download/{video_filename}"
+                
+                yield f"data: {json.dumps({'status': f'Video ready at {height_label(height)}!', 'progress': 100, 'complete': True, 'video_file': final_path, 'download_url': download_url})}\n\n"
                 
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"

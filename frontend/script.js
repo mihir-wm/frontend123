@@ -18,6 +18,13 @@ class YouTubeDownloader {
             return savedUrl;
         }
         
+        // Check if we're on Vercel and need to set backend URL
+        if (window.location.hostname.includes('vercel.app')) {
+            console.warn('Running on Vercel but no backend URL set. Please set BACKEND_URL environment variable.');
+            // You can set this manually in browser console:
+            // localStorage.setItem('backendUrl', 'https://your-ngrok-url.ngrok.io')
+        }
+        
         // Default to localhost with ngrok (you can change this)
         return 'http://localhost:8000';
     }
@@ -409,19 +416,25 @@ class YouTubeDownloader {
         const downloadSection = document.getElementById(`${type}-download`);
         downloadSection.style.display = 'block';
 
-        if (type === 'screenshots' && data.zip_file) {
+        if (type === 'screenshots' && data.download_url) {
             const zipLink = document.getElementById('screenshots-zip');
-            zipLink.href = data.zip_file;
+            const backendUrl = this.getBackendUrl();
+            zipLink.href = `${backendUrl}${data.download_url}`;
+            zipLink.style.display = 'block';
         }
 
-        if (type === 'audio' && data.audio_file) {
+        if (type === 'audio' && data.download_url) {
             const audioLink = document.getElementById('audio-file');
-            audioLink.href = data.audio_file;
+            const backendUrl = this.getBackendUrl();
+            audioLink.href = `${backendUrl}${data.download_url}`;
+            audioLink.style.display = 'block';
         }
 
-        if (type === 'video' && data.video_file) {
+        if (type === 'video' && data.download_url) {
             const videoLink = document.getElementById('video-file');
-            videoLink.href = data.video_file;
+            const backendUrl = this.getBackendUrl();
+            videoLink.href = `${backendUrl}${data.download_url}`;
+            videoLink.style.display = 'block';
         }
     }
 
