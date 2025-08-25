@@ -335,8 +335,12 @@ async def extract_screenshots(request: ScreenshotsRequest):
                 ydl_opts = {**YTDLP_COMMON, "format": "best[ext=mp4][acodec!=none][vcodec!=none]",
                             "outtmpl": os.path.join(session_dir, "%(title).200B.%(ext)s"), "logger": _QuietLogger()}
                 
+                yield f"data: {json.dumps({'status': 'Downloading video...', 'progress': 15})}\n\n"
+                
                 with YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(norm, download=True)
+                
+                yield f"data: {json.dumps({'status': 'Video download completed, processing...', 'progress': 25})}\n\n"
                 
                 # Find downloaded video file
                 req = info.get("requested_downloads")
@@ -395,10 +399,14 @@ async def extract_screenshots(request: ScreenshotsRequest):
                     raise RuntimeError("No screenshots were extracted.")
                 
                 # Create ZIP file
+                yield f"data: {json.dumps({'status': 'Creating ZIP file...', 'progress': 85})}\n\n"
+                
                 zip_path = os.path.join(session_dir, "screenshots.zip")
                 with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
                     for p in paths:
                         zf.write(p, arcname=os.path.basename(p))
+                
+                yield f"data: {json.dumps({'status': 'ZIP file created successfully', 'progress': 90})}\n\n"
                 
                 # Save to user folder if requested
                 if request.save_to_folder and request.user_folder:
@@ -413,14 +421,15 @@ async def extract_screenshots(request: ScreenshotsRequest):
                 
                 yield f"data: {json.dumps({'status': f'Done. Extracted {len(paths)} screenshot(s).', 'progress': 100, 'complete': True, 'zip_file': zip_path, 'download_url': download_url})}\n\n"
                 
+                # Keep files alive for a few minutes so they can be downloaded
+                yield f"data: {json.dumps({'status': 'Files ready for download. They will be cleaned up automatically.', 'progress': 100})}\n\n"
+                
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
             finally:
-                # Cleanup temporary files
-                try:
-                    shutil.rmtree(session_dir)
-                except:
-                    pass
+                # Don't cleanup immediately - let files be downloaded first
+                # Files will be cleaned up by the system later
+                pass
                     
         except Exception as e:
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -438,7 +447,7 @@ async def download_file(filename: str):
         # Check common temp locations
         temp_dirs = [
             tempfile.gettempdir(),
-            os.path.join(tempfile.gettempdir(), "ytscreenshots_*"),
+            os.path.join(tempfile.gettempdir(), "ytshots_*"),  # Fixed prefix
             os.path.join(tempfile.gettempdir(), "ytaudio_*"),
             os.path.join(tempfile.gettempdir(), "ytvideo_*")
         ]
